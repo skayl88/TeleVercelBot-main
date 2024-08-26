@@ -24,7 +24,7 @@ const customText = async (ctx) => {
     try {
         const data = await fetchAudio(title);
         const file_url = data.file_url;
-        await ctx.sendVoice(ctx.chat.id, { url: file_url });
+        await ctx.sendAudio(ctx.chat.id, file_url);
     } catch (error) {
         console.error('Error generating audio:', error);
         await ctx.reply('Произошла ошибка при преобразовании текста в аудио. Попробуйте снова позже.');
