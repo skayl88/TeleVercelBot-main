@@ -1,5 +1,4 @@
-import TeleBot from "telebot";
-import shortReply from "telebot/plugins/shortReply.js";
+const TeleBot = require('telebot');
 
 // Функция для получения аудио по названию
 const fetchAudio = async (title) => {
@@ -13,21 +12,21 @@ const fetchAudio = async (title) => {
 };
 
 // Функция для обработки текста и отправки аудио
-const customText = async (ctx) => {
-    const title = ctx.text?.trim(); // Убираем лишние пробелы
+const customText = async (msg) => {
+    const title = msg.text?.trim(); // Убираем лишние пробелы
 
     if (!title) {
-        await ctx.reply('Пожалуйста, отправьте текст для озвучивания.');
+        await msg.reply.text('Пожалуйста, отправьте текст для озвучивания.');
         return;
     }
 
     try {
         const data = await fetchAudio(title);
         const file_url = data.file_url;
-        await ctx.sendAudio(ctx.chat.id, file_url);
+        await bot.sendVoice(msg.chat.id, file_url);
     } catch (error) {
         console.error('Error generating audio:', error);
-        await ctx.reply('Произошла ошибка при преобразовании текста в аудио. Попробуйте снова позже.');
+        await msg.reply.text('Произошла ошибка при преобразовании текста в аудио. Попробуйте снова позже.');
     }
 };
 
@@ -35,9 +34,7 @@ const customText = async (ctx) => {
 const bot = new TeleBot(process.env.TELEGRAM_BOT_TOKEN);
 
 // Обработка текстовых сообщений
-bot.on("text", customText);
+bot.on('text', customText);
 
-// Подключение плагина shortReply
-bot.plug(shortReply);
-
-export default bot;
+// Начинаем получать обновления
+bot.start();
