@@ -1,6 +1,6 @@
-import TeleBot from 'telebot';
+import TeleBot from "telebot";
+import shortReply from "telebot/plugins/shortReply.js";
 
-// Функция для получения аудио по названию
 const fetchAudio = async (title) => {
     const response = await fetch('https://books-mu-ten.vercel.app/generate-audio-book', {
         method: 'POST',
@@ -34,7 +34,9 @@ const customText = async (msg) => {
 const bot = new TeleBot(process.env.TELEGRAM_BOT_TOKEN);
 
 // Обработка текстовых сообщений
-bot.on('text', customText);
+bot.on("text", customText);
 
-// Начинаем получать обновления
-bot.start();
+// Подключение плагина shortReply
+bot.plug(shortReply);
+
+export default bot;
