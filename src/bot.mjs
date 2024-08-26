@@ -13,11 +13,11 @@ const fetchAudio = async (title) => {
 };
 
 // Функция для обработки текста и отправки аудио
-const customText = () => async (ctx) => {
-    const title = ctx.message.text.trim(); // Убираем лишние пробелы
+const customText = async (ctx) => {
+    const title = ctx.text?.trim(); // Убираем лишние пробелы
 
     if (!title) {
-        ctx.reply('Пожалуйста, отправьте текст для озвучивания.');
+        await ctx.reply('Пожалуйста, отправьте текст для озвучивания.');
         return;
     }
 
@@ -35,7 +35,7 @@ const customText = () => async (ctx) => {
 const bot = new TeleBot(process.env.TELEGRAM_BOT_TOKEN);
 
 // Обработка текстовых сообщений
-bot.on("text", customText());
+bot.on("text", customText);
 
 // Подключение плагина shortReply
 bot.plug(shortReply);
