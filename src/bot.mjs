@@ -1,4 +1,4 @@
-const TeleBot = require('telebot');
+import TeleBot from 'telebot';
 
 // Функция для получения аудио по названию
 const fetchAudio = async (title) => {
