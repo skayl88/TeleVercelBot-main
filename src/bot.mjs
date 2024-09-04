@@ -26,7 +26,7 @@ const customText = async (msg) => {
         await bot.sendVoice(msg.chat.id, file_url);
     } catch (error) {
         console.error('Error generating audio:', error);
-        await msg.reply.text(error);
+        await msg.reply.text(error.error);
     }
 };
 
