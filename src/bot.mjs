@@ -1,8 +1,21 @@
 import TeleBot from "telebot";
 import shortReply from "telebot/plugins/shortReply.js";
 
+const API_URL = 'https://books-dh3f.onrender.com';
+
+// Функция для получения статуса задачи
+const fetchTaskStatus = async (taskId) => {
+    const response = await fetch(`${API_URL}/task-status/${taskId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await response.json();
+    return data;
+};
+
+// Функция для отправки запроса на генерацию аудиокниги
 const fetchAudio = async (query) => {
-    const response = await fetch('https://books-mu-ten.vercel.app/generate-audio-book', {
+    const response = await fetch(`${API_URL}/generate-audio-book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
@@ -21,9 +34,39 @@ const customText = async (msg) => {
     }
 
     try {
-        const data = await fetchAudio(title);
-        const file_url = data.file_url;
+        // Отправляем запрос на генерацию аудиокниги
+        const initialData = await fetchAudio(title);
+
+        // Проверяем, был ли отправлен task_id
+        const { task_id, status } = initialData;
+
+        if (status === 'pending') {
+            await msg.reply.text('Генерация книги начата, подождите...');
+        }
+
+        // Периодически проверяем статус задачи
+        let taskStatus = 'pending';
+        let resultData = null;
+
+        while (taskStatus === 'pending') {
+            await new Promise(resolve => setTimeout(resolve, 5000));  // Ожидаем 5 секунд перед следующим запросом
+
+            resultData = await fetchTaskStatus(task_id);
+            taskStatus = resultData.status;
+
+            if (taskStatus === 'completed') {
+                break;
+            }
+
+            if (taskStatus === 'failed') {
+                throw new Error(resultData.error || 'Произошла ошибка при генерации аудиокниги.');
+            }
+        }
+
+        // Если задача завершена, отправляем аудио
+        const file_url = resultData.file_url;
         await bot.sendVoice(msg.chat.id, file_url);
+
     } catch (error) {
         console.error('Error generating audio:', error);
         await msg.reply.text('Произошла ошибка при преобразовании текста в аудио. Попробуйте снова позже.');
