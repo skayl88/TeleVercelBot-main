@@ -1,11 +1,11 @@
 import TeleBot from "telebot";
 import shortReply from "telebot/plugins/shortReply.js";
 
-const fetchAudio = async (title) => {
+const fetchAudio = async (query) => {
     const response = await fetch('https://books-mu-ten.vercel.app/generate-audio-book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
+        body: JSON.stringify({ query })
     });
     const data = await response.json();
     return data;
