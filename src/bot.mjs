@@ -1,27 +1,40 @@
 import TeleBot from "telebot";
 import shortReply from "telebot/plugins/shortReply.js";
+import fetch from "node-fetch";
+import fs from "fs";
+import path from "path";
 
-const API_URL = 'https://books-dh3f.onrender.com';
-
-// Функция для получения статуса задачи
-const fetchTaskStatus = async (taskId) => {
-    const response = await fetch(`${API_URL}/task-status/${taskId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    });
-    const data = await response.json();
-    return data;
-};
-
-// Функция для отправки запроса на генерацию аудиокниги
+// Функция для загрузки аудиофайла
 const fetchAudio = async (query) => {
-    const response = await fetch(`${API_URL}/generate-audio-book`, {
+    const response = await fetch('https://books-dh3f.onrender.com/generate-audio-book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
     });
     const data = await response.json();
     return data;
+};
+
+// Функция для загрузки файла и отправки в Telegram через содержимое
+const sendAudioFile = async (msg, fileUrl, title) => {
+    try {
+        // Скачиваем аудиофайл
+        const response = await fetch(fileUrl);
+        const buffer = await response.buffer();
+
+        // Сохраняем файл локально
+        const filePath = path.join(__dirname, `${title}.mp3`);
+        fs.writeFileSync(filePath, buffer);
+
+        // Отправляем файл в Telegram
+        await bot.sendVoice(msg.chat.id, filePath);
+
+        // Удаляем локальный файл после отправки
+        fs.unlinkSync(filePath);
+    } catch (error) {
+        console.error("Error sending audio file:", error);
+        await msg.reply.text('Произошла ошибка при отправке аудиофайла. Попробуйте снова позже.');
+    }
 };
 
 // Функция для обработки текста и отправки аудио
@@ -34,38 +47,11 @@ const customText = async (msg) => {
     }
 
     try {
-        // Отправляем запрос на генерацию аудиокниги
-        const initialData = await fetchAudio(title);
+        const data = await fetchAudio(title);
+        const file_url = data.file_url;
 
-        // Проверяем, был ли отправлен task_id
-        const { task_id, status } = initialData;
-
-        if (status === 'pending') {
-            await msg.reply.text('Генерация книги начата, подождите...');
-        }
-
-        // Периодически проверяем статус задачи
-        let taskStatus = 'pending';
-        let resultData = null;
-
-        while (taskStatus === 'pending') {
-            await new Promise(resolve => setTimeout(resolve, 5000));  // Ожидаем 5 секунд перед следующим запросом
-
-            resultData = await fetchTaskStatus(task_id);
-            taskStatus = resultData.status;
-
-            if (taskStatus === 'completed') {
-                break;
-            }
-
-            if (taskStatus === 'failed') {
-                throw new Error(resultData.error || 'Произошла ошибка при генерации аудиокниги.');
-            }
-        }
-
-        // Если задача завершена, отправляем аудио
-        const file_url = resultData.file_url;
-        await bot.sendVoice(msg.chat.id, file_url);
+        // Отправляем аудио через скачанный файл
+        await sendAudioFile(msg, file_url, data.title);
 
     } catch (error) {
         console.error('Error generating audio:', error);
