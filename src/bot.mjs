@@ -1,7 +1,7 @@
 import TeleBot from "telebot";
 import shortReply from "telebot/plugins/shortReply.js";
 
-// Функция для отправки запроса на генерацию аудиофайла
+// Function to send a request for generating an audio file
 const fetchAudio = async (query) => {
     const response = await fetch('https://books-dh3f.onrender.com/generate-audio-book', {
         method: 'POST',
@@ -12,7 +12,7 @@ const fetchAudio = async (query) => {
     return data;
 };
 
-// Функция для проверки статуса задачи по task_id
+// Function to check the status of the task by task_id
 const checkTaskStatus = async (task_id) => {
     const response = await fetch(`https://books-dh3f.onrender.com/task-status/${task_id}`, {
         method: 'GET',
@@ -22,24 +22,24 @@ const checkTaskStatus = async (task_id) => {
     return data;
 };
 
-// Функция для обработки текста и отправки аудио
+// Function to process the text and send the audio
 const customText = async (msg) => {
-    const title = msg.text?.trim(); // Убираем лишние пробелы
+    const title = msg.text?.trim(); // Remove extra spaces
 
     if (!title) {
-        await msg.reply.text('Пожалуйста, отправьте текст для озвучивания.');
+        await msg.reply.text('Please send the text for audio conversion.');
         return;
     }
 
     try {
-        // Запрашиваем создание задачи на генерацию аудиофайла
+        // Request to create a task for generating the audio file
         const data = await fetchAudio(title);
         const task_id = data.task_id;
 
         if (data.status === 'pending') {
-            await msg.reply.text('Генерация аудиофайла началась, пожалуйста, подождите.');
+            await msg.reply.text('Audio generation has started, please wait.');
 
-            // Устанавливаем таймаут на 30 секунд для проверки статуса задачи
+            // Set a 30-second timeout to check the task status
             setTimeout(async () => {
                 try {
                     const statusData = await checkTaskStatus(task_id);
@@ -48,37 +48,36 @@ const customText = async (msg) => {
                         const file_url = statusData.file_url;
                         await bot.sendVoice(msg.chat.id, file_url);
                     } else if (statusData.status === 'failed') {
-                        await msg.reply.text('Не удалось сгенерировать аудиофайл. Пожалуйста, попробуйте позже.');
+                        await msg.reply.text('Failed to generate the audio file. Please try again later.');
                     } else {
-                        await msg.reply.text('Генерация аудиофайла всё ещё продолжается. Попробуйте снова позже.');
+                        await msg.reply.text('Audio generation is still in progress. Please try again later.');
                     }
                 } catch (statusError) {
                     console.error('Error checking task status:', statusError);
-                    await msg.reply.text('Произошла ошибка при проверке статуса. Попробуйте снова позже.');
+                    await msg.reply.text('An error occurred while checking the task status. Please try again later.');
                 }
-            }, 30000); // 30 секунд
+            }, 30000); // 30 seconds
 
-        }else if((data.status === 'completed')){
+        } else if (data.status === 'completed') {
             const file_url = data.file_url;
             await bot.sendVoice(msg.chat.id, file_url);
-        }
-         else {
-            await msg.reply.text('Произошла ошибка при создании задачи. Попробуйте снова позже.');
+        } else {
+            await msg.reply.text('An error occurred while creating the task. Please try again later.');
         }
 
     } catch (error) {
         console.error('Error generating audio:', error);
-        await msg.reply.text('Произошла ошибка при преобразовании текста в аудио. Попробуйте снова позже.');
+        await msg.reply.text('An error occurred during the text-to-audio conversion. Please try again later.');
     }
 };
 
-// Создаем бота с использованием токена
+// Create the bot using the token
 const bot = new TeleBot(process.env.TELEGRAM_BOT_TOKEN);
 
-// Обработка текстовых сообщений
+// Handle text messages
 bot.on("text", customText);
 
-// Подключение плагина shortReply
+// Plugin for short replies
 bot.plug(shortReply);
 
 export default bot;
