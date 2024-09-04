@@ -58,7 +58,11 @@ const customText = async (msg) => {
                 }
             }, 30000); // 30 секунд
 
-        } else {
+        }else if((data.status === 'completed')){
+            const file_url = data.file_url;
+            await bot.sendVoice(msg.chat.id, file_url);
+        }
+         else {
             await msg.reply.text('Произошла ошибка при создании задачи. Попробуйте снова позже.');
         }
 
