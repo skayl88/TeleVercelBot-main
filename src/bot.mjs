@@ -3,7 +3,7 @@ import shortReply from "telebot/plugins/shortReply.js";
 
 // Function to send a request for generating an audio file
 const fetchAudio = async (query) => {
-    const response = await fetch('https://books-dh3f.onrender.com/generate-audio-book', {
+    const response = await fetch('https://books-mu-ten.vercel.app/generate-audio-book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
@@ -14,7 +14,7 @@ const fetchAudio = async (query) => {
 
 // Function to check the status of the task by task_id
 const checkTaskStatus = async (task_id) => {
-    const response = await fetch(`https://books-dh3f.onrender.com/task-status/${task_id}`, {
+    const response = await fetch(`https://books-mu-ten.vercel.app/task-status/${task_id}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
     });
